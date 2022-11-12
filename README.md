@@ -1,2 +1,2 @@
-# bougBot
+# BougBot
 Ceci est le BougBot
