@@ -4,10 +4,17 @@ from discord.ui import Button, View
 from discord.ext import commands
 from dotenv import load_dotenv
 import random
+import datetime
 import json
 
 from Bougs import Boug
 from load_save_bougs import save_bougs, load_bougs
+
+from Commands.coin import *
+from Commands.money import *
+from Commands.voclist import *
+
+# import Commands.coin_cog as coin_cog
 
 load_dotenv(dotenv_path="config")
 
@@ -26,6 +33,11 @@ class BougBot(commands.Bot):
         return json.dumps(self, default=lambda o: o.__dict__)
 
     async def on_ready(self):
+        # add commands from Cogs
+        await self.add_cog(CoinCog(self))
+        await self.add_cog(MoneyCog(self))
+        await self.add_cog(VoclistCog(self))
+        # end add commands
         self.botid = f"<@{self.user.id}>"
         print(f"{self.user.display_name} est prêt.")
         self.list_members_guild = list(discord.utils.get(self.guilds, name="Les Bougs du fond").members)
@@ -40,10 +52,17 @@ class BougBot(commands.Bot):
                 self.dict_boug[guild_member.id] = Boug(
                     self.loaded_data[id_member]['id'],
                     self.loaded_data[id_member]['name'],
-                    self.loaded_data[id_member]['money']
-                    )
+                    self.loaded_data[id_member]['money'],
+                    self.loaded_data[id_member]['last_connected']
+                )
             else:
-                self.dict_boug[guild_member.id] = Boug(guild_member.id, guild_member.name, 0)
+                self.dict_boug[guild_member.id] = Boug(
+                    guild_member.id,
+                    guild_member.name,
+                    random.randint(0,1000),
+                    datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+                )
+        save_bougs(self)
 
     async def reply(self, message, list_words, response):
         if any(x in message.content.lower() for x in list_words):
@@ -58,38 +77,36 @@ class BougBot(commands.Bot):
         print(message.content)
         await self.process_commands(message)
 
+    async def on_voice_state_update(self, member, before, after):
+        # print('member:', member)
+        # print('before:', before)
+        # print('after:', after)
+        # print('\n')
+        ts = datetime.datetime.now()
+        if before.channel == after.channel:
+            print('Voice state changed, but no connection/disconnection')
+        else:
+            if after.channel and after.channel.name in ('Général', 'les_devs'):
+                print(f'{member} connected on {after.channel.name} at {ts}\n')
+                self.dict_boug[member.id].last_connected = ts.strftime("%Y-%m-%d %H:%M:%S")
+                save_bougs(self)
+            if before.channel and before.channel.name in ('Général', 'les_devs'):
+                print(f'{member} disconnected from {before.channel.name} at {ts}')
+                # print(f"{member} has {self.dict_boug[member.id].money} bougcoin")
+                member_last_connection = self.dict_boug[member.id].last_connected
+                member_last_connection= datetime.datetime.strptime(member_last_connection, "%Y-%m-%d %H:%M:%S")
+                delta = ts - member_last_connection
+                print(f'Time spent on {before.channel.name}: {delta.seconds} sec')
 
-def get_vocal_members(ctx, channel_name="Général"):
-    return discord.utils.get(ctx.guild.channels, name=channel_name).members
-
+                money_gain = delta.seconds
+                self.dict_boug[member.id].money = self.dict_boug[member.id].money + money_gain
+                self.dict_boug[member.id].last_connected = ts.strftime("%Y-%m-%d %H:%M:%S")
+                save_bougs(self)
+    
 
 boug_bot = BougBot()
 
 # Custom bot commands below
-
-# Display all members currently inside a given VoiceChannel
-@boug_bot.command()
-async def voclist(ctx):
-    voc_members = get_vocal_members(ctx)
-    member_list = [member for member in voc_members]
-    embed = discord.Embed(
-        title=f"Les membres en vocal sont :", description="\n", colour=discord.Colour.blue())
-    for member in member_list:
-        # embed.add_field(name=str(member), value="\u200b", inline=False)
-        embed.add_field(name=str(member.name), value=boug_bot.dict_boug[member.id].money, inline=False)
-
-    await ctx.send(embed=embed)
-
-# Randomly choose a member currently inside a VoiceChannel
-@boug_bot.command(description="Choisit un volontaire parmis les membre connectés en vocal")
-async def volontaire(ctx):
-    voc_members = get_vocal_members(ctx)
-    member_list = [member.name for member in voc_members]
-    volontaire = random.choice(member_list)
-    embed = discord.Embed(
-        title=f"<:dogekek:751132464407248986>  {volontaire} est volontaire  <:dogekek:751132464407248986>", description="", colour=discord.Colour.blue())
-    await ctx.send(embed=embed)
-
 
 @boug_bot.command()
 async def save(ctx):
@@ -104,57 +121,6 @@ async def load(ctx):
     boug_bot.loaded_data = data_bougs
 
 
-# Display all members currently inside a given VoiceChannel
-@boug_bot.command()
-async def money(ctx): 
-    embed = discord.Embed(
-        title=f"Nombre de BougCoin des membres :", description="\n", colour=discord.Colour.blue())
-
-    for boug in boug_bot.dict_boug.values():
-        print(f"{boug.name}, {boug.money}")
-        embed.add_field(name=boug.name, value=boug.money, inline=False)
-
-    await ctx.send(embed=embed)
-
-
-@boug_bot.command()
-async def coin(ctx, target=None):
-    if target:
-        id_target = int(target[2:-1])
-    else:
-        id_target = ctx.message.author.id
-
-    embed = discord.Embed(
-        title=f"Nombre de :coin: BougCoin :coin: de :", description="\n", colour=discord.Colour.blue())
-    
-    target_boug = boug_bot.dict_boug[id_target]
-    embed.add_field(name=target_boug.name, value=target_boug.money, inline=False)
-    await ctx.send(embed=embed)
-
-
-@boug_bot.command()
-async def top(ctx, nth=5): 
-    embed = discord.Embed(
-        title=f"Top {nth} des bougs les plus riches :", description="\n", colour=discord.Colour.blue())
-
-    sorted_dict = sorted(boug_bot.dict_boug.values(),key=lambda x: x.money, reverse=True)
-    for boug in sorted_dict[:nth]:
-        print(f"{boug.name}, {boug.money}")
-        embed.add_field(name=boug.name, value=boug.money, inline=False)
-
-    await ctx.send(embed=embed)
-
-@boug_bot.command()
-async def bottom(ctx, nth=5): 
-    embed = discord.Embed(
-        title=f"Top {nth} des bougs les plus PAUVRES (cheh) :", description="\n", colour=discord.Colour.blue())
-
-    sorted_dict = sorted(boug_bot.dict_boug.values(),key=lambda x: x.money, reverse=False)
-    for boug in sorted_dict[:nth]:
-        print(f"{boug.name}, {boug.money}")
-        embed.add_field(name=boug.name, value=boug.money, inline=False)
-    await ctx.send(embed=embed)
-
 """
 ADD commande admin pour créer argent (ou éditer à la main le json)
 """
@@ -164,11 +130,19 @@ async def give(ctx, target, amount):
     id_target = int(target[2:-1])
     id_author = ctx.message.author.id
     amount = min(amount, boug_bot.dict_boug[id_author].money)
+    amount = max(amount, 0)
 
     print(boug_bot.dict_boug[id_target].money)
-    boug_bot.dict_boug[id_target].money = boug_bot.dict_boug[id_target].money + amount
+    boug_bot.dict_boug[id_target].money += amount
     print(boug_bot.dict_boug[id_target].money)
-    boug_bot.dict_boug[id_author].money = boug_bot.dict_boug[id_author].money - amount
+    boug_bot.dict_boug[id_author].money -= amount
+
+    embed = discord.Embed(
+    title=f":coin: BougCoin :coin:", description="\n", colour=discord.Colour.blue())
+    embed.add_field(name=f"{boug_bot.dict_boug[id_author].name} :arrow_right: {boug_bot.dict_boug[id_target].name}", value=f"{amount} :coin:", inline=False)
+    embed.add_field(name=f":bank: {boug_bot.dict_boug[id_target].name}", value=f"{boug_bot.dict_boug[id_target].money} :coin:", inline=False)
+    embed.add_field(name=f":bank: {boug_bot.dict_boug[id_author].name} ", value=f"{boug_bot.dict_boug[id_author].money} :coin:", inline=False)
+    await ctx.send(embed=embed)
 
     save_bougs(boug_bot)
 
@@ -209,9 +183,7 @@ async def roulboug(ctx, amount, risk=1):
         # boug_bot.dict_boug[id_target].money = boug_bot.dict_boug[id_target].money - loss
         await ctx.send(content=f'Dommage tu as perdu {amount}')
         save_bougs(boug_bot)
-
-    
-
+  
 
 async def roullette_button(ctx, amount, risk):
     button_yes = Button(label="Rejouer ?", style=discord.ButtonStyle.green)
@@ -224,6 +196,23 @@ async def roullette_button(ctx, amount, risk):
     view=View()
     view.add_item(button_yes)
     await ctx.send(view=view)
+
+@boug_bot.command()
+async def adgive(ctx, target, amount):
+    list_role = [role.name for role in ctx.message.author.roles]
+    if "admin" in list_role:
+        amount = int(amount)
+        id_target = int(target[2:-1])
+        boug_bot.dict_boug[id_target].money = boug_bot.dict_boug[id_target].money + amount
+
+        embed = discord.Embed(
+        title=f":coin: BougCoin :coin:", description="\n", colour=discord.Colour.blue())
+        embed.add_field(name=f":moneybag: :arrow_right: {boug_bot.dict_boug[id_target].name}", value=f"{amount} :coin:", inline=False)
+        embed.add_field(name=f":bank: {boug_bot.dict_boug[id_target].name}", value=f"{boug_bot.dict_boug[id_target].money} :coin:", inline=False)
+        await ctx.send(embed=embed)
+
+        save_bougs(boug_bot)
+
 
 
 ########
