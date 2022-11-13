@@ -189,7 +189,7 @@ class BotBase(GroupMixin[None]):
             raise TypeError('Both owner_id and owner_ids are set.')
 
         if self.owner_ids and not isinstance(self.owner_ids, collections.abc.Collection):
-            raise TypeError(f'owner_ids must be a collection not {self.owner_ids.__class__!r}')
+            raise TypeError(f'owner_ids must be a collection not {self.owner_ids.__class__.__name__}')
 
         if help_command is _default:
             self.help_command = DefaultHelpCommand()
@@ -1059,7 +1059,9 @@ class BotBase(GroupMixin[None]):
         await self._call_module_finalizers(lib, name)
 
     async def reload_extension(self, name: str, *, package: Optional[str] = None) -> None:
-        """Atomically reloads an extension.
+        """|coro|
+
+        Atomically reloads an extension.
 
         This replaces the extension with the same extension, only refreshed. This is
         equivalent to a :meth:`unload_extension` followed by a :meth:`load_extension`

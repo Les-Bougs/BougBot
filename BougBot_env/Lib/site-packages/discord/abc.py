@@ -419,6 +419,11 @@ class GuildChannel:
             pass
 
         try:
+            options['default_thread_rate_limit_per_user'] = options.pop('default_thread_slowmode_delay')
+        except KeyError:
+            pass
+
+        try:
             rtc_region = options.pop('rtc_region')
         except KeyError:
             pass
@@ -785,7 +790,7 @@ class GuildChannel:
 
         Deletes the channel.
 
-        You must have :attr:`~discord.Permissions.manage_channels` permission to use this.
+        You must have :attr:`~discord.Permissions.manage_channels` to do this.
 
         Parameters
         -----------
@@ -849,7 +854,7 @@ class GuildChannel:
         If the ``overwrite`` parameter is ``None``, then the permission
         overwrites are deleted.
 
-        You must have the :attr:`~discord.Permissions.manage_roles` permission to use this.
+        You must have :attr:`~discord.Permissions.manage_roles` to do this.
 
         .. note::
 
@@ -965,8 +970,7 @@ class GuildChannel:
         Clones this channel. This creates a channel with the same properties
         as this channel.
 
-        You must have the :attr:`~discord.Permissions.manage_channels` permission to
-        do this.
+        You must have :attr:`~discord.Permissions.manage_channels` to do this.
 
         .. versionadded:: 1.1
 
@@ -1047,8 +1051,7 @@ class GuildChannel:
 
         If exact position movement is required, ``edit`` should be used instead.
 
-        You must have the :attr:`~discord.Permissions.manage_channels` permission to
-        do this.
+        You must have :attr:`~discord.Permissions.manage_channels` to do this.
 
         .. note::
 
@@ -1185,8 +1188,7 @@ class GuildChannel:
 
         Creates an instant invite from a text or voice channel.
 
-        You must have the :attr:`~discord.Permissions.create_instant_invite` permission to
-        do this.
+        You must have :attr:`~discord.Permissions.create_instant_invite` to do this.
 
         Parameters
         ------------
@@ -1211,12 +1213,12 @@ class GuildChannel:
             .. versionadded:: 2.0
 
         target_user: Optional[:class:`User`]
-            The user whose stream to display for this invite, required if `target_type` is `TargetType.stream`. The user must be streaming in the channel.
+            The user whose stream to display for this invite, required if ``target_type`` is :attr:`.InviteTarget.stream`. The user must be streaming in the channel.
 
             .. versionadded:: 2.0
 
         target_application_id:: Optional[:class:`int`]
-            The id of the embedded application for the invite, required if `target_type` is `TargetType.embedded_application`.
+            The id of the embedded application for the invite, required if ``target_type`` is :attr:`.InviteTarget.embedded_application`.
 
             .. versionadded:: 2.0
 
@@ -1508,7 +1510,7 @@ class Messageable:
             reference_dict = MISSING
 
         if view and not hasattr(view, '__discord_ui_view__'):
-            raise TypeError(f'view parameter must be View not {view.__class__!r}')
+            raise TypeError(f'view parameter must be View not {view.__class__.__name__}')
 
         if suppress_embeds:
             from .message import MessageFlags  # circular import
@@ -1639,7 +1641,7 @@ class Messageable:
     ) -> AsyncIterator[Message]:
         """Returns an :term:`asynchronous iterator` that enables receiving the destination's message history.
 
-        You must have :attr:`~discord.Permissions.read_message_history` permissions to use this.
+        You must have :attr:`~discord.Permissions.read_message_history` to do this.
 
         Examples
         ---------

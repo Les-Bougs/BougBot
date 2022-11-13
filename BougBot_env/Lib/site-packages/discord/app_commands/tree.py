@@ -346,7 +346,7 @@ class CommandTree(Generic[ClientT]):
                 self._context_menus.update(current)
             return
         elif not isinstance(command, (Command, Group)):
-            raise TypeError(f'Expected an application command, received {command.__class__!r} instead')
+            raise TypeError(f'Expected an application command, received {command.__class__.__name__} instead')
 
         # todo: validate application command groups having children (required)
 
@@ -983,7 +983,9 @@ class CommandTree(Generic[ClientT]):
         return self._state._translator
 
     async def set_translator(self, translator: Optional[Translator]) -> None:
-        """Sets the translator to use for translating commands.
+        """|coro|
+
+        Sets the translator to use for translating commands.
 
         If a translator was previously set, it will be unloaded using its
         :meth:`Translator.unload` method.
@@ -1002,7 +1004,7 @@ class CommandTree(Generic[ClientT]):
         """
 
         if translator is not None and not isinstance(translator, Translator):
-            raise TypeError(f'expected None or Translator instance, received {translator.__class__!r} instead')
+            raise TypeError(f'expected None or Translator instance, received {translator.__class__.__name__} instead')
 
         old_translator = self._state._translator
         if old_translator is not None:
@@ -1068,7 +1070,7 @@ class CommandTree(Generic[ClientT]):
             else:
                 data = await self._http.bulk_upsert_guild_commands(self.client.application_id, guild.id, payload=payload)
         except HTTPException as e:
-            if e.status == 400:
+            if e.status == 400 and e.code == 50035:
                 raise CommandSyncFailure(e, commands) from None
             raise
 

@@ -315,7 +315,7 @@ class ScheduledEvent(Hashable):
 
         Edits the scheduled event.
 
-        Requires :attr:`~Permissions.manage_events` permissions.
+        You must have :attr:`~Permissions.manage_events` to do this.
 
         Parameters
         -----------
@@ -362,7 +362,7 @@ class ScheduledEvent(Hashable):
         Raises
         -------
         TypeError
-            `image` was not a :term:`py:bytes-like object`, or ``privacy_level``
+            ``image`` was not a :term:`py:bytes-like object`, or ``privacy_level``
             was not a :class:`PrivacyLevel`, or ``entity_type`` was not an
             :class:`EntityType`, ``status`` was not an :class:`EventStatus`, or
             an argument was provided that was incompatible with the scheduled event's
@@ -414,7 +414,7 @@ class ScheduledEvent(Hashable):
         entity_type = entity_type or getattr(channel, '_scheduled_event_entity_type', MISSING)
         if entity_type is None:
             raise TypeError(
-                f'invalid GuildChannel type passed, must be VoiceChannel or StageChannel not {channel.__class__!r}'
+                f'invalid GuildChannel type passed, must be VoiceChannel or StageChannel not {channel.__class__.__name__}'
             )
 
         if entity_type is not MISSING:
@@ -470,7 +470,7 @@ class ScheduledEvent(Hashable):
 
         Deletes the scheduled event.
 
-        Requires :attr:`~Permissions.manage_events` permissions.
+        You must have :attr:`~Permissions.manage_events` to do this.
 
         Parameters
         -----------

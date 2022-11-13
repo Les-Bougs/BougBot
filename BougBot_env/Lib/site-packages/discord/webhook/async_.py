@@ -68,7 +68,7 @@ if TYPE_CHECKING:
     from ..http import Response
     from ..guild import Guild
     from ..emoji import Emoji
-    from ..channel import VoiceChannel
+    from ..channel import ForumChannel, VoiceChannel
     from ..abc import Snowflake
     from ..ui.view import View
     import datetime
@@ -189,9 +189,8 @@ class AsyncWebhookAdapter:
                         if remaining == '0' and response.status != 429:
                             delta = utils._parse_ratelimit_header(response)
                             _log.debug(
-                                'Webhook ID %s has exhausted its rate limit bucket (bucket: %s, retry: %s).',
+                                'Webhook ID %s has exhausted its rate limit bucket (retry: %s).',
                                 webhook_id,
-                                bucket,
                                 delta,
                             )
                             lock.delay_by(delta)
@@ -202,10 +201,10 @@ class AsyncWebhookAdapter:
                         if response.status == 429:
                             if not response.headers.get('Via'):
                                 raise HTTPException(response, data)
-                            fmt = 'Webhook ID %s is rate limited. Retrying in %.2f seconds. Handled under the bucket %s'
+                            fmt = 'Webhook ID %s is rate limited. Retrying in %.2f seconds.'
 
                             retry_after: float = data['retry_after']  # type: ignore
-                            _log.warning(fmt, webhook_id, retry_after, bucket, stack_info=True)
+                            _log.warning(fmt, webhook_id, retry_after)
                             await asyncio.sleep(retry_after)
                             continue
 
@@ -1007,8 +1006,8 @@ class BaseWebhook(Hashable):
         return self._state and self._state._get_guild(self.guild_id)
 
     @property
-    def channel(self) -> Optional[Union[VoiceChannel, TextChannel]]:
-        """Optional[Union[:class:`VoiceChannel`, :class:`TextChannel`]]: The channel this webhook belongs to.
+    def channel(self) -> Optional[Union[ForumChannel, VoiceChannel, TextChannel]]:
+        """Optional[Union[:class:`ForumChannel`, :class:`VoiceChannel`, :class:`TextChannel`]]: The channel this webhook belongs to.
 
         If this is a partial webhook, then this will always return ``None``.
         """
@@ -1060,7 +1059,8 @@ class Webhook(BaseWebhook):
 
     There are two main ways to use Webhooks. The first is through the ones
     received by the library such as :meth:`.Guild.webhooks`,
-    :meth:`.TextChannel.webhooks` and :meth:`.VoiceChannel.webhooks`.
+    :meth:`.TextChannel.webhooks`, :meth:`.VoiceChannel.webhooks`
+    and :meth:`.ForumChannel.webhooks`.
     The ones received by the library will automatically be
     bound using the library's internal HTTP session.
 
@@ -1227,7 +1227,7 @@ class Webhook(BaseWebhook):
             A partial :class:`Webhook`.
             A partial webhook is just a webhook object with an ID and a token.
         """
-        m = re.search(r'discord(?:app)?.com/api/webhooks/(?P<id>[0-9]{17,20})/(?P<token>[A-Za-z0-9\.\-\_]{60,68})', url)
+        m = re.search(r'discord(?:app)?\.com/api/webhooks/(?P<id>[0-9]{17,20})/(?P<token>[A-Za-z0-9\.\-\_]{60,68})', url)
         if m is None:
             raise ValueError('Invalid webhook URL given.')
 
@@ -1695,7 +1695,7 @@ class Webhook(BaseWebhook):
                 raise ValueError('Webhook views require an associated state with the webhook')
 
             if not hasattr(view, '__discord_ui_view__'):
-                raise TypeError(f'expected view parameter to be of type View not {view.__class__!r}')
+                raise TypeError(f'expected view parameter to be of type View not {view.__class__.__name__}')
 
             if ephemeral is True and view.timeout is None:
                 view.timeout = 15 * 60.0

@@ -188,9 +188,8 @@ class WebhookAdapter:
                         if remaining == '0' and response.status_code != 429:
                             delta = utils._parse_ratelimit_header(response)
                             _log.debug(
-                                'Webhook ID %s has exhausted its rate limit bucket (bucket: %s, retry: %s).',
+                                'Webhook ID %s has exhausted its rate limit bucket (retry: %s).',
                                 webhook_id,
-                                bucket,
                                 delta,
                             )
                             lock.delay_by(delta)
@@ -201,10 +200,10 @@ class WebhookAdapter:
                         if response.status_code == 429:
                             if not response.headers.get('Via'):
                                 raise HTTPException(response, data)
-                            fmt = 'Webhook ID %s is rate limited. Retrying in %.2f seconds. Handled under the bucket %s'
+                            fmt = 'Webhook ID %s is rate limited. Retrying in %.2f seconds.'
 
                             retry_after: float = data['retry_after']  # type: ignore
-                            _log.warning(fmt, webhook_id, retry_after, stack_info=True)
+                            _log.warning(fmt, webhook_id, retry_after)
                             time.sleep(retry_after)
                             continue
 
@@ -650,7 +649,7 @@ class SyncWebhook(BaseWebhook):
 
         if session is not MISSING:
             if not isinstance(session, requests.Session):
-                raise TypeError(f'expected requests.Session not {session.__class__!r}')
+                raise TypeError(f'expected requests.Session not {session.__class__.__name__}')
         else:
             session = requests  # type: ignore
         return cls(data, session, token=bot_token)
@@ -683,7 +682,7 @@ class SyncWebhook(BaseWebhook):
             A partial :class:`Webhook`.
             A partial webhook is just a webhook object with an ID and a token.
         """
-        m = re.search(r'discord(?:app)?.com/api/webhooks/(?P<id>[0-9]{17,20})/(?P<token>[A-Za-z0-9\.\-\_]{60,68})', url)
+        m = re.search(r'discord(?:app)?\.com/api/webhooks/(?P<id>[0-9]{17,20})/(?P<token>[A-Za-z0-9\.\-\_]{60,68})', url)
         if m is None:
             raise ValueError('Invalid webhook URL given.')
 
@@ -693,7 +692,7 @@ class SyncWebhook(BaseWebhook):
 
         if session is not MISSING:
             if not isinstance(session, requests.Session):
-                raise TypeError(f'expected requests.Session not {session.__class__!r}')
+                raise TypeError(f'expected requests.Session not {session.__class__.__name__}')
         else:
             session = requests  # type: ignore
         return cls(data, session, token=bot_token)  # type: ignore

@@ -415,7 +415,7 @@ class Loop(Generic[LF]):
             use :meth:`cancel` instead.
 
         .. versionchanged:: 2.0
-            Calling this method in :meth:`before_loop` will stop the first iteration from running.
+            Calling this method in :meth:`before_loop` will stop the loop before the initial iteration is run.
 
         .. versionadded:: 1.2
         """
@@ -491,7 +491,7 @@ class Loop(Generic[LF]):
 
             This operation obviously cannot be undone!
         """
-        self._valid_exception = tuple()
+        self._valid_exception = ()
 
     def remove_exception_type(self, *exceptions: Type[BaseException]) -> bool:
         r"""Removes exception types from being handled during the reconnect logic.
@@ -545,7 +545,7 @@ class Loop(Generic[LF]):
         The coroutine must take no arguments (except ``self`` in a class context).
 
         .. versionchanged:: 2.0
-            Calling :meth:`stop` in this coroutine will stop the initial iteration from running.
+            Calling :meth:`stop` in this coroutine will stop the loop before the initial iteration is run.
 
         Parameters
         ------------
@@ -559,7 +559,7 @@ class Loop(Generic[LF]):
         """
 
         if not inspect.iscoroutinefunction(coro):
-            raise TypeError(f'Expected coroutine function, received {coro.__class__.__name__!r}.')
+            raise TypeError(f'Expected coroutine function, received {coro.__class__.__name__}.')
 
         self._before_loop = coro
         return coro
@@ -587,7 +587,7 @@ class Loop(Generic[LF]):
         """
 
         if not inspect.iscoroutinefunction(coro):
-            raise TypeError(f'Expected coroutine function, received {coro.__class__.__name__!r}.')
+            raise TypeError(f'Expected coroutine function, received {coro.__class__.__name__}.')
 
         self._after_loop = coro
         return coro
@@ -617,7 +617,7 @@ class Loop(Generic[LF]):
             The function was not a coroutine.
         """
         if not inspect.iscoroutinefunction(coro):
-            raise TypeError(f'Expected coroutine function, received {coro.__class__.__name__!r}.')
+            raise TypeError(f'Expected coroutine function, received {coro.__class__.__name__}.')
 
         self._error = coro
         return coro

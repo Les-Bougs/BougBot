@@ -69,7 +69,7 @@ if TYPE_CHECKING:
     # Generally, these two libraries are supposed to be separate from each other.
     # However, for type hinting purposes it's unfortunately necessary for one to
     # reference the other to prevent type checking errors in callbacks
-    from discord.ext.commands import Cog
+    from discord.ext import commands
 
     ErrorFunc = Callable[[Interaction, AppCommandError], Coroutine[Any, Any, None]]
 
@@ -105,7 +105,7 @@ Error = Union[
     UnboundError,
 ]
 Check = Callable[['Interaction'], Union[bool, Coro[bool]]]
-Binding = Union['Group', 'Cog']
+Binding = Union['Group', 'commands.Cog']
 
 
 if TYPE_CHECKING:
@@ -127,8 +127,8 @@ if TYPE_CHECKING:
     ]
 
     AutocompleteCallback = Union[
-        Callable[[GroupT, 'Interaction', ChoiceT], Coro[List[Choice[ChoiceT]]]],
-        Callable[['Interaction', ChoiceT], Coro[List[Choice[ChoiceT]]]],
+        Callable[[GroupT, 'Interaction', str], Coro[List[Choice[ChoiceT]]]],
+        Callable[['Interaction', str], Coro[List[Choice[ChoiceT]]]],
     ]
 else:
     CommandCallback = Callable[..., Coro[T]]
@@ -433,6 +433,9 @@ def _extract_parameters_from_callback(func: Callable[..., Any], globalns: Dict[s
 
 def _get_context_menu_parameter(func: ContextMenuCallback) -> Tuple[str, Any, AppCommandType]:
     params = inspect.signature(func).parameters
+    if is_inside_class(func) and not hasattr(func, '__self__'):
+        raise TypeError('context menus cannot be defined inside a class')
+
     if len(params) != 2:
         msg = (
             f'context menu callback {func.__qualname__!r} requires 2 parameters, '
@@ -456,6 +459,11 @@ def _get_context_menu_parameter(func: ContextMenuCallback) -> Tuple[str, Any, Ap
     resolved = resolve_annotation(parameter.annotation, func.__globals__, func.__globals__, {})
     type = _context_menu_annotation(resolved)
     return (parameter.name, resolved, type)
+
+
+def mark_overrideable(func: F) -> F:
+    func.__discord_app_commands_base_function__ = None
+    return func
 
 
 class Parameter:
@@ -815,13 +823,16 @@ class Command(Generic[GroupT, P, T]):
         parent = self.parent
         if parent is not None:
             # Check if the on_error is overridden
-            if parent.__class__.on_error is not Group.on_error:
+            if not hasattr(parent.on_error, '__discord_app_commands_base_function__'):
                 return True
 
             if parent.parent is not None:
-                parent_cls = parent.parent.__class__
-                if parent_cls.on_error is not Group.on_error:
+                if not hasattr(parent.parent.on_error, '__discord_app_commands_base_function__'):
                     return True
+
+        # Check if we have a bound error handler
+        if getattr(self.binding, '__discord_app_commands_error_handler__', None) is not None:
+            return True
 
         return False
 
@@ -1041,8 +1052,7 @@ class Command(Generic[GroupT, P, T]):
         """A decorator that registers a coroutine as an autocomplete prompt for a parameter.
 
         The coroutine callback must have 2 parameters, the :class:`~discord.Interaction`,
-        and the current value by the user (usually either a :class:`str`, :class:`int`, or :class:`float`,
-        depending on the type of the parameter being marked as autocomplete).
+        and the current value by the user (the string currently being typed by the user).
 
         To get the values from other parameters that may be filled in, accessing
         :attr:`.Interaction.namespace` will give a :class:`Namespace` object with those
@@ -1147,7 +1157,7 @@ class ContextMenu:
     one of the following decorators:
 
     - :func:`~discord.app_commands.context_menu`
-    - :meth:`CommandTree.command <discord.app_commands.CommandTree.context_menu>`
+    - :meth:`CommandTree.context_menu <discord.app_commands.CommandTree.context_menu>`
 
     .. versionadded:: 2.0
 
@@ -1578,7 +1588,7 @@ class Group:
                 # This is pretty hacky
                 # It allows the module to be fetched if someone just constructs a bare Group object though.
                 self.module = inspect.currentframe().f_back.f_globals['__name__']  # type: ignore
-            except (AttributeError, IndexError):
+            except (AttributeError, IndexError, KeyError):
                 self.module = None
 
         self._children: Dict[str, Union[Command, Group]] = {}
@@ -1745,6 +1755,7 @@ class Group:
             if isinstance(command, Group):
                 yield from command.walk_commands()
 
+    @mark_overrideable
     async def on_error(self, interaction: Interaction, error: AppCommandError, /) -> None:
         """|coro|
 
@@ -1848,7 +1859,7 @@ class Group:
         """
 
         if not isinstance(command, (Command, Group)):
-            raise TypeError(f'expected Command or Group not {command.__class__!r}')
+            raise TypeError(f'expected Command or Group not {command.__class__.__name__}')
 
         if isinstance(command, Group) and self.parent is not None:
             # In a tree like so:

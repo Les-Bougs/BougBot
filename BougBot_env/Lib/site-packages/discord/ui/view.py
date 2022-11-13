@@ -319,7 +319,7 @@ class View:
             raise ValueError('maximum number of children exceeded')
 
         if not isinstance(item, Item):
-            raise TypeError(f'expected Item not {item.__class__!r}')
+            raise TypeError(f'expected Item not {item.__class__.__name__}')
 
         self.__weights.add_item(item)
 
@@ -413,7 +413,7 @@ class View:
 
     async def _scheduled_task(self, item: Item, interaction: Interaction):
         try:
-            item._refresh_state(interaction.data)  # type: ignore
+            item._refresh_state(interaction, interaction.data)  # type: ignore
 
             allow = await self.interaction_check(interaction)
             if not allow:
@@ -508,7 +508,9 @@ class View:
         return self.timeout is None and all(item.is_persistent() for item in self._children)
 
     async def wait(self) -> bool:
-        """Waits until the view has finished interacting.
+        """|coro|
+
+        Waits until the view has finished interacting.
 
         A view is considered finished when :meth:`stop` is called
         or it times out.

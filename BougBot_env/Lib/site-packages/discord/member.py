@@ -348,7 +348,7 @@ class Member(discord.abc.Messageable, _UserTag):
         self.premium_since: Optional[datetime.datetime] = utils.parse_time(data.get('premium_since'))
         self._roles: utils.SnowflakeList = utils.SnowflakeList(map(int, data['roles']))
         self._client_status: _ClientStatus = _ClientStatus()
-        self.activities: Tuple[ActivityTypes, ...] = tuple()
+        self.activities: Tuple[ActivityTypes, ...] = ()
         self.nick: Optional[str] = data.get('nick', None)
         self.pending: bool = data.get('pending', False)
         self._avatar: Optional[str] = data.get('avatar')
@@ -711,14 +711,20 @@ class Member(discord.abc.Messageable, _UserTag):
     async def ban(
         self,
         *,
-        delete_message_days: int = 1,
+        delete_message_days: int = MISSING,
+        delete_message_seconds: int = MISSING,
         reason: Optional[str] = None,
     ) -> None:
         """|coro|
 
         Bans this member. Equivalent to :meth:`Guild.ban`.
         """
-        await self.guild.ban(self, reason=reason, delete_message_days=delete_message_days)
+        await self.guild.ban(
+            self,
+            reason=reason,
+            delete_message_days=delete_message_days,
+            delete_message_seconds=delete_message_seconds,
+        )
 
     async def unban(self, *, reason: Optional[str] = None) -> None:
         """|coro|
@@ -916,8 +922,7 @@ class Member(discord.abc.Messageable, _UserTag):
 
         Moves a member to a new voice channel (they must be connected first).
 
-        You must have the :attr:`~Permissions.move_members` permission to
-        use this.
+        You must have :attr:`~Permissions.move_members` to do this.
 
         This raises the same exceptions as :meth:`edit`.
 
@@ -942,8 +947,7 @@ class Member(discord.abc.Messageable, _UserTag):
         Applies a time out to a member until the specified date time or for the
         given :class:`datetime.timedelta`.
 
-        You must have the :attr:`~Permissions.moderate_members` permission to
-        use this.
+        You must have :attr:`~Permissions.moderate_members` to do this.
 
         This raises the same exceptions as :meth:`edit`.
 
@@ -970,7 +974,7 @@ class Member(discord.abc.Messageable, _UserTag):
         elif isinstance(until, datetime.datetime):
             timed_out_until = until
         else:
-            raise TypeError(f'expected None, datetime.datetime, or datetime.timedelta not {until.__class__!r}')
+            raise TypeError(f'expected None, datetime.datetime, or datetime.timedelta not {until.__class__.__name__}')
 
         await self.edit(timed_out_until=timed_out_until, reason=reason)
 
@@ -979,7 +983,7 @@ class Member(discord.abc.Messageable, _UserTag):
 
         Gives the member a number of :class:`Role`\s.
 
-        You must have the :attr:`~Permissions.manage_roles` permission to
+        You must have :attr:`~Permissions.manage_roles` to
         use this, and the added :class:`Role`\s must appear lower in the list
         of roles than the highest role of the member.
 
@@ -1018,7 +1022,7 @@ class Member(discord.abc.Messageable, _UserTag):
 
         Removes :class:`Role`\s from this member.
 
-        You must have the :attr:`~Permissions.manage_roles` permission to
+        You must have :attr:`~Permissions.manage_roles` to
         use this, and the removed :class:`Role`\s must appear lower in the list
         of roles than the highest role of the member.
 

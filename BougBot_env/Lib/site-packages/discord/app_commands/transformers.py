@@ -47,7 +47,7 @@ from typing import (
 from .errors import AppCommandError, TransformerError
 from .models import AppCommandChannel, AppCommandThread, Choice
 from .translator import TranslationContextLocation, TranslationContext, Translator, locale_str
-from ..channel import StageChannel, VoiceChannel, TextChannel, CategoryChannel
+from ..channel import StageChannel, VoiceChannel, TextChannel, CategoryChannel, ForumChannel
 from ..abc import GuildChannel
 from ..threads import Thread
 from ..enums import Enum as InternalEnum, AppCommandOptionType, ChannelType, Locale
@@ -286,7 +286,7 @@ class Transformer:
 
     @property
     def choices(self) -> Optional[List[Choice[Union[int, float, str]]]]:
-        """Optional[List[:class:`~discord.app_commands.Choice`]]: A list of choices that are allowed to this parameter.
+        """Optional[List[:class:`~discord.app_commands.Choice`]]: A list of up to 25 choices that are allowed to this parameter.
 
         Only valid if the :meth:`type` returns :attr:`~discord.AppCommandOptionType.number`
         :attr:`~discord.AppCommandOptionType.integer`, or :attr:`~discord.AppCommandOptionType.string`.
@@ -431,7 +431,7 @@ class EnumValueTransformer(Transformer):
 
         values = list(enum)
         if len(values) < 2:
-            raise TypeError(f'enum.Enum requires at least two values.')
+            raise TypeError('enum.Enum requires at least two values.')
 
         first = type(values[0].value)
         if first is int:
@@ -469,7 +469,7 @@ class EnumNameTransformer(Transformer):
 
         values = list(enum)
         if len(values) < 2:
-            raise TypeError(f'enum.Enum requires at least two values.')
+            raise TypeError('enum.Enum requires at least two values.')
 
         self._enum: Any = enum
         self._choices = [Choice(name=v.name, value=v.name) for v in values]
@@ -528,10 +528,10 @@ else:
 
         def __class_getitem__(cls, items) -> _TransformMetadata:
             if not isinstance(items, tuple):
-                raise TypeError(f'expected tuple for arguments, received {items.__class__!r} instead')
+                raise TypeError(f'expected tuple for arguments, received {items.__class__.__name__} instead')
 
             if len(items) != 2:
-                raise TypeError(f'Transform only accepts exactly two arguments')
+                raise TypeError('Transform only accepts exactly two arguments')
 
             _, transformer = items
 
@@ -540,7 +540,7 @@ else:
                     raise TypeError(f'second argument of Transform must be a Transformer class not {transformer!r}')
                 transformer = transformer()
             elif not isinstance(transformer, Transformer):
-                raise TypeError(f'second argument of Transform must be a Transformer not {transformer.__class__!r}')
+                raise TypeError(f'second argument of Transform must be a Transformer not {transformer.__class__.__name__}')
 
             return transformer
 
@@ -571,7 +571,7 @@ else:
 
         def __class_getitem__(cls, obj) -> _TransformMetadata:
             if not isinstance(obj, tuple):
-                raise TypeError(f'expected tuple for arguments, received {obj.__class__!r} instead')
+                raise TypeError(f'expected tuple for arguments, received {obj.__class__.__name__} instead')
 
             if len(obj) == 2:
                 obj = (*obj, None)
@@ -635,7 +635,7 @@ class BaseChannelTransformer(Transformer):
                 try:
                     types.extend(CHANNEL_TO_TYPES[t])
                 except KeyError:
-                    raise TypeError(f'Union type of channels must be entirely made up of channels') from None
+                    raise TypeError('Union type of channels must be entirely made up of channels') from None
 
         self._types: Tuple[Type[Any]] = channel_types
         self._channel_types: List[ChannelType] = types
@@ -685,6 +685,7 @@ CHANNEL_TO_TYPES: Dict[Any, List[ChannelType]] = {
         ChannelType.text,
         ChannelType.news,
         ChannelType.category,
+        ChannelType.forum,
     ],
     GuildChannel: [
         ChannelType.stage_voice,
@@ -692,6 +693,7 @@ CHANNEL_TO_TYPES: Dict[Any, List[ChannelType]] = {
         ChannelType.text,
         ChannelType.news,
         ChannelType.category,
+        ChannelType.forum,
     ],
     AppCommandThread: [ChannelType.news_thread, ChannelType.private_thread, ChannelType.public_thread],
     Thread: [ChannelType.news_thread, ChannelType.private_thread, ChannelType.public_thread],
@@ -699,6 +701,7 @@ CHANNEL_TO_TYPES: Dict[Any, List[ChannelType]] = {
     VoiceChannel: [ChannelType.voice],
     TextChannel: [ChannelType.text, ChannelType.news],
     CategoryChannel: [ChannelType.category],
+    ForumChannel: [ChannelType.forum],
 }
 
 BUILT_IN_TRANSFORMERS: Dict[Any, Transformer] = {
@@ -717,6 +720,7 @@ BUILT_IN_TRANSFORMERS: Dict[Any, Transformer] = {
     VoiceChannel: BaseChannelTransformer(VoiceChannel),
     TextChannel: BaseChannelTransformer(TextChannel),
     CategoryChannel: BaseChannelTransformer(CategoryChannel),
+    ForumChannel: BaseChannelTransformer(ForumChannel),
     Attachment: IdentityTransformer(AppCommandOptionType.attachment),
 }
 
@@ -759,7 +763,7 @@ def get_supported_annotation(
             else:
                 return (EnumNameTransformer(annotation), MISSING, False)
         if annotation is Choice:
-            raise TypeError(f'Choice requires a type argument of int, str, or float')
+            raise TypeError('Choice requires a type argument of int, str, or float')
 
         # Check if a transform @classmethod is given to the class
         # These flatten into simple "inline" transformers with implicit strings
@@ -767,9 +771,9 @@ def get_supported_annotation(
         if isinstance(transform_classmethod, classmethod):
             params = inspect.signature(transform_classmethod.__func__).parameters
             if len(params) != 3:
-                raise TypeError(f'Inline transformer with transform classmethod requires 3 parameters')
+                raise TypeError('Inline transformer with transform classmethod requires 3 parameters')
             if not inspect.iscoroutinefunction(transform_classmethod.__func__):
-                raise TypeError(f'Inline transformer with transform classmethod must be a coroutine')
+                raise TypeError('Inline transformer with transform classmethod must be a coroutine')
             return (InlineTransformer(annotation), MISSING, False)
 
     # Check if there's an origin
