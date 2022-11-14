@@ -1,3 +1,4 @@
 config
 __pycache__/
 Commands/__pycache__/
+.DS_Store
