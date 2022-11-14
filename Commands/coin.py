@@ -1,4 +1,5 @@
 import discord
+from discord import option
 from discord.ext import commands
 from load_save_bougs import save_bougs, load_bougs
 
@@ -8,18 +9,20 @@ class CoinCog(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
 
+
     @commands.slash_command(name="coin", guild_ids=guild_id)
+    @option("user", description="Membre du serveur, commence par @")
     async def coin(self, ctx, user=None):
         """Donne le solde de BougCoin d'un membre du serveur"""
-        #Define target
+        
+        #Target
         if user:
             id_target = int(user[2:-1])
         else:
             id_target = ctx.author.id
         target_boug = self.bot.dict_boug[id_target]
 
-        print(id_target)
-
+        #Embed
         embed = discord.Embed(
             title=f":coin: BougCoin :coin:",
             description="\n", 
@@ -27,22 +30,26 @@ class CoinCog(commands.Cog):
         embed.add_field(name="\u200b", value=f":bank: <@{target_boug.id}>: {target_boug.money} :coin:", inline=False)
         await ctx.respond(embed=embed)
 
+
     @commands.slash_command(name="give", guild_ids=guild_id)
-    async def give(self, ctx, target, amount):
+    @option("user", description="Membre du serveur, commence par @")
+    @option("amount", description="Montant de BougCoin à crediter", min_value=1)
+    async def give(self, ctx, user:str, amount:int):
         """Envoyer de l'argent à un membre du serveur"""
-        amount = int(amount)
-        id_target = int(target[2:-1])
+        
+        #Target & Author
+        id_target = int(user[2:-1])
         id_author = ctx.author.id
         target_boug = self.bot.dict_boug[id_target]
         author_boug = self.bot.dict_boug[id_author]
         amount = min(amount, author_boug.money)
-        amount = max(amount, 0)
 
         #Transaction
         target_boug.money += amount
         author_boug.money -= amount
         save_bougs(self.bot)
 
+        #Embed
         embed = discord.Embed(
             title=f":coin: BougCoin :coin:", 
             description="\n", 
@@ -52,26 +59,31 @@ class CoinCog(commands.Cog):
         embed.add_field(name="\u200b", value=f":bank: <@{author_boug.id}>: {author_boug.money} :coin:", inline=False)
         await ctx.respond(embed=embed)
 
+
     @commands.slash_command(name="adgive", guild_ids=guild_id)
-    async def adgive(self, ctx, target, amount):
+    @discord.default_permissions(administrator=True) #Seul les admin peuvent faire la command TODO à test
+    @option("user", description="Membre du serveur, commence par @")
+    @option("amount", description="Montant de BougCoin à crediter")
+    async def adgive(self, ctx, target:str, amount:int):
         """! réservé aux Admins ! Ajouter de l'argent à un membre du serveur"""
-        list_role = [role.name for role in ctx.author.roles]
-        if "admin" in list_role:
-            amount = int(amount)
-            id_target = int(target[2:-1])
-            target_boug = self.bot.dict_boug[id_target]
 
-            #Transaction
-            target_boug.money += amount
-            save_bougs(self.bot)
+        #Target
+        id_target = int(target[2:-1])
+        target_boug = self.bot.dict_boug[id_target]
 
-            embed = discord.Embed(
-                title=f":coin: BougCoin :coin:", 
-                description="\n", 
-                colour=discord.Colour.blue())
-            embed.add_field(name="\u200b", value=f":moneybag: :arrow_right: <@{target_boug.id}>: {amount} :coin:", inline=False)
-            embed.add_field(name="\u200b", value=f":bank: <@{target_boug.id}>: {target_boug.money} :coin:", inline=False)
-            await ctx.respond(embed=embed)
+        #Transaction
+        target_boug.money += amount
+        save_bougs(self.bot)
+
+        #Embed
+        embed = discord.Embed(
+            title=f":coin: BougCoin :coin:", 
+            description="\n", 
+            colour=discord.Colour.blue())
+        embed.add_field(name="\u200b", value=f":moneybag: :arrow_right: <@{target_boug.id}>: {amount} :coin:", inline=False)
+        embed.add_field(name="\u200b", value=f":bank: <@{target_boug.id}>: {target_boug.money} :coin:", inline=False)
+        await ctx.respond(embed=embed)
+
 
 def setup(bot):
     bot.add_cog(CoinCog(bot))
