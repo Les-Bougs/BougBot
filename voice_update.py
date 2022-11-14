@@ -15,9 +15,9 @@ def voice_update(bot, member, before, after):
             member_last_connection = bot.dict_boug[member.id].last_connected
             member_last_connection= datetime.datetime.strptime(member_last_connection, "%Y-%m-%d %H:%M:%S")
             delta = ts - member_last_connection
-            print(f'Time spent on {before.channel.name}: {delta.seconds} sec')
+            print(f'Time spent on {before.channel.name}: {delta.seconds} sec (soit {delta.seconds//60} min)')
 
-            money_gain = delta.seconds
+            money_gain = delta.seconds//600
             bot.dict_boug[member.id].money = bot.dict_boug[member.id].money + money_gain
             bot.dict_boug[member.id].last_connected = ts.strftime("%Y-%m-%d %H:%M:%S")
             print(f"{member} à été crédité de {money_gain} BougCoin.")
