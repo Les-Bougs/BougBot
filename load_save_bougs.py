@@ -1,9 +1,9 @@
 import json
 
-def save_bougs(BougBot):
-    with open('data_bougs_save.json', 'w') as fp:
+def save_bougs(bot):
+    with open('blockchain.json', 'w') as fp:
         tmp_dict = {}
-        for boug in BougBot.dict_boug.values():
+        for boug in bot.dict_boug.values():
             tmp_dict[boug.get_id()] = {
                 'id': boug.get_id(),
                 'name': boug.get_name(),
@@ -16,8 +16,8 @@ def save_bougs(BougBot):
         print('Data successfully saved')
 
 
-def load_bougs(BougBot):
-    with open('data_bougs_save.json', 'r') as fp:
+def load_bougs():
+    with open('blockchain.json', 'r') as fp:
         data = json.load(fp)
         # print(data)
         return data

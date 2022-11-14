@@ -5,6 +5,8 @@ from load_save_bougs import save_bougs, load_bougs
 
 import random
 
+guild_id = [751114414132035694]
+
 class GameCog(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
@@ -13,10 +15,16 @@ class GameCog(commands.Cog):
     Ajouter restriction pour utiliser le bouton (seulement auteur peut cliquer)
     Delete le message quand le bouton est utilisé
     """
-    @commands.command()
-    async def roulboug(self, ctx, amount, risk=1):
-        id_target = ctx.message.author.id
-        amount = min(int(amount), 1000, self.bot.dict_boug[id_target].money)
+    @commands.slash_command(name="roulboug", guild_ids=guild_id)
+    async def roulboug(self, ctx, amount:int, risk=1):
+        """Permet de jouer au célèbre RoulBoug"""
+        id_target = ctx.author.id
+        amount = min(amount, 1000, self.bot.dict_boug[id_target].money)
+        if amount <= 0:
+            await ctx.respond(content=f'Bien essayé petit malin !')
+            return None
+
+        amount = max(amount, 0)
         # print(risk)
         base = 6
         
@@ -36,25 +44,31 @@ class GameCog(commands.Cog):
             self.bot.dict_boug[id_target].money = self.bot.dict_boug[id_target].money + amount + gain
             print(self.bot.dict_boug[id_target].money)
             save_bougs(self.bot)
-            await ctx.send(content=f'Bravo tu as gagné {amount + gain}')
+            await ctx.respond(content=f'Bravo tu as gagné {amount + gain}') # TODO add mention author
             if risk < 5:
-                await self.roullette_button(ctx, amount, risk)
+                await self.roullette_button(ctx, amount, risk, id_target)
             else:
-                await ctx.send(content=f'Bravo tu as gagné le max {amount + gain}')
+                await ctx.respond(content=f'Bravo tu as gagné le max {amount + gain}')
         else:
             # self.bot.dict_boug[id_target].money = self.bot.dict_boug[id_target].money - loss
-            await ctx.send(content=f'Dommage tu as perdu {amount}')
+            await ctx.respond(content=f'Dommage tu as perdu {amount}')
             save_bougs(self.bot)
     
 
-    async def roullette_button(self, ctx, amount, risk):
+    async def roullette_button(self, ctx, amount, risk, id_target):
         button_yes = Button(label="Rejouer ?", style=discord.ButtonStyle.green)
         risk += 1
         async def button_yes_callback(interaction):
-            await self.roulboug(ctx, amount, risk)
+            if interaction.user.id == id_target:
+                await interaction.message.delete()
+                await self.roulboug(ctx, amount, risk)
         
         button_yes.callback = button_yes_callback
 
         view=View()
         view.add_item(button_yes)
-        await ctx.send(view=view)
+        #await ctx.send(view=view)
+        await ctx.channel.send(view=view)
+
+def setup(bot):
+    bot.add_cog(GameCog(bot))
