@@ -63,5 +63,8 @@ class BougBot(discord.Bot):
 bot = BougBot()
 
 bot.load_extension("Commands.coin")
+bot.load_extension("Commands.money")
+bot.load_extension("Commands.voclist")
+bot.load_extension("Commands.game")
 
 bot.run(os.getenv("TOKEN"))

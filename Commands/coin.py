@@ -54,7 +54,7 @@ class CoinCog(commands.Cog):
 
     @commands.slash_command(name="adgive", guild_ids=guild_id)
     async def adgive(self, ctx, target, amount):
-        """! réservé au Admin ! Ajouter de l'argent à un membre du serveur"""
+        """! réservé aux Admins ! Ajouter de l'argent à un membre du serveur"""
         list_role = [role.name for role in ctx.author.roles]
         if "admin" in list_role:
             amount = int(amount)

@@ -1,11 +1,13 @@
 import discord
 from discord.ext import commands
 
+guild_id = [751114414132035694]
+
 class MoneyCog(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
     
-    @commands.command()
+    @commands.slash_command(name="money", guild_ids=guild_id)
     async def money(self, ctx): 
         embed = discord.Embed(
             title=f":coin: BougCoin :coin:", 
@@ -14,10 +16,10 @@ class MoneyCog(commands.Cog):
         for boug in self.bot.dict_boug.values():
             embed.add_field(name="\u200b", value=f":bank: {boug.name}: {boug.money} :coin:", inline=False)
 
-        await ctx.reply(embed=embed)
+        await ctx.respond(embed=embed)
     
-    @commands.command(aliases=["rich", "richest"])
-    async def top(self, ctx, nth=5):
+    @commands.slash_command(name="top", guild_ids=guild_id) # TO DO add aliases
+    async def top(self, ctx, nth:int=5):
         sorted_dict = sorted(self.bot.dict_boug.values(),key=lambda x: x.money, reverse=True)
 
         embed = discord.Embed(
@@ -27,9 +29,9 @@ class MoneyCog(commands.Cog):
         for boug in sorted_dict[:nth]:
             embed.add_field(name="\u200b", value=f":bank: {boug.name}: {boug.money} :coin:", inline=False)
 
-        await ctx.reply(embed=embed)
+        await ctx.respond(embed=embed)
 
-    @commands.command()
+    @commands.slash_command(name="bottom", guild_ids=guild_id)
     async def bottom(self, ctx, nth=5):
         sorted_dict = sorted(self.bot.dict_boug.values(),key=lambda x: x.money, reverse=False)
 
@@ -41,4 +43,7 @@ class MoneyCog(commands.Cog):
             print(f"{boug.name}, {boug.money}")
             embed.add_field(name="\u200b", value=f":bank: {boug.name}: {boug.money} :coin:", inline=False)
 
-        await ctx.reply(embed=embed)
+        await ctx.respond(embed=embed)
+
+def setup(bot):
+    bot.add_cog(MoneyCog(bot))
