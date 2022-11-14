@@ -29,6 +29,9 @@ class GameCog(commands.Cog):
             view.add_item(button_yes)
 
         id_target = ctx.author.id
+        if self.bot.dict_boug[id_target].money == 0:
+            await ctx.respond("T'es à sec fréro, déso")
+            return None
         amount = min(amount, 1000, self.bot.dict_boug[id_target].money)
         base = 6
         chance = risk/base
