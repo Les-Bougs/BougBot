@@ -1,1 +1,3 @@
 config
+__pycache__/
+Commands/__pycache__/
