@@ -40,7 +40,8 @@ class BougBot(discord.Bot):
                 self.dict_boug[guild_member.id] = Boug(
                     guild_member.id,
                     guild_member.name,
-                    random.randint(0,1000),
+                    #random.randint(0,1000),
+                    0,
                     datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
                 )
         save_bougs(self)
