@@ -36,7 +36,7 @@ class GameCog(commands.Cog):
         amount = min(amount, 1000, self.bot.dict_boug[id_target].money)
         base = 6
         chance = risk/base
-        view=View()
+        view=View(timeout=30) # add timeout to roulboug button
 
         #Tableau des gains
         dict_gain = {0:0, 1: 0.1, 2: 0.3, 3: 0.5, 4: 0.7, 5: 1}
