@@ -7,6 +7,7 @@ from dotenv import load_dotenv
 from Bougs import Boug
 from load_save_bougs import save_bougs, load_bougs
 from voice_update import voice_update
+from reaction_update import reaction_update
 
 load_dotenv(dotenv_path="config")
 
@@ -25,6 +26,7 @@ class BougBot(discord.Bot):
         self.botid = f"<@{self.user.id}>"
         self.name = f"{self.user.display_name}"
         self.list_members_guild = list(discord.utils.get(self.guilds, name="Les Bougs du fond").members)
+        self.dict_msg = {}
         self.loaded_data = load_bougs()
 
         for guild_member in self.list_members_guild:
@@ -63,16 +65,7 @@ class BougBot(discord.Bot):
     
     # ADD ON REACTION EVENT
     async def on_reaction_add(self, reaction, user):
-        message = reaction.message
-        if isinstance(reaction.emoji, str):
-            emoji_name = reaction.emoji
-        else:
-            emoji_name = reaction.emoji.name
-        print(f"{user} reacted with {emoji_name} on '{message.content}' written by {message.author}")
-        if message.author == user:
-            print(f'{user} a réagi à son propre message (aka auto-suceur move)')
-        else:
-            print(f'{user} donne de la force à son fréro {message.author}')
+        reaction_update(self, reaction, user)
     
 ## ADD JOB EVERY X TIMES
 # import datetime
