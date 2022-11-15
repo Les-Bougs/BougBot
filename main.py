@@ -61,6 +61,43 @@ class BougBot(discord.Bot):
     async def on_voice_state_update(self, member, before, after):
         voice_update(self, member, before, after)
     
+    # ADD ON REACTION EVENT
+    async def on_reaction_add(self, reaction, user):
+        message = reaction.message
+        if isinstance(reaction.emoji, str):
+            emoji_name = reaction.emoji
+        else:
+            emoji_name = reaction.emoji.name
+        print(f"{user} reacted with {emoji_name} on '{message.content}' written by {message.author}")
+        if message.author == user:
+            print(f'{user} a réagi à son propre message (aka auto-suceur move)')
+        else:
+            print(f'{user} donne de la force à son fréro {message.author}')
+    
+## ADD JOB EVERY X TIMES
+# import datetime
+# import discord
+# from discord.ext import tasks
+
+# client = discord.Client()
+
+# goodNightTime = datetime.time(hour=21, minute=45, second=40) #Create the time on which the task should always run
+
+# @tasks.loop(time=goodNightTime) #Create the task
+# async def Goodnight():
+#     channel = client.get_channel(806702411808768023)
+#     await channel.send("Good night! Make sure to go to sleep early, and get enough sleep!")
+#     print("Night Working")
+
+# @client.event
+# async def on_ready():
+#     if not Goodnight.is_running():
+#         Goodnight.start() #If the task is not already running, start it.
+#         print("Good night task started")
+
+# client.run(TOKEN)
+
+
 bot = BougBot()
 
 bot.load_extension("Commands.coin")
