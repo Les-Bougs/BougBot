@@ -13,13 +13,14 @@ class MoneyCog(commands.Cog):
     async def money(self, ctx):
         """Solde de tous les membres du serveur"""
 
-        total_coin=0
         sorted_dict = sorted(self.bot.dict_boug.values(),key=lambda x: x.money, reverse=True)
 
         embed = discord.Embed(
             title=f":coin: BougCoin :coin:", 
             description="\n", 
             colour=discord.Colour.blue())
+        
+        total_coin=0
         for boug in sorted_dict:
             if boug.money > 0:
                 embed.add_field(name="\u200b", value=f":bank: {boug.name}: {boug.money} :coin:", inline=False)
