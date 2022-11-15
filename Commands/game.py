@@ -41,7 +41,7 @@ class GameCog(commands.Cog):
         #Tableau des gains
         dict_gain = {0:0, 1: 0.1, 2: 0.3, 3: 0.5, 4: 0.7, 5: 1}
 
-        #On retire lamise de départ
+        #On retire la mise de départ
         self.bot.dict_boug[id_target].money = self.bot.dict_boug[id_target].money - amount - int(amount*dict_gain[risk-1])
         save_bougs(self.bot)
 
@@ -66,6 +66,7 @@ class GameCog(commands.Cog):
                 embed.add_field(name="\u200b", value=f"<:stonks:833364123990360075> Bravo champion, tu as gagné le jackpot !", inline=False)
                 await ctx.send(embed=embed)
         else:
+            self.bot.dict_boug[self.bot.botid].money = self.bot.dict_boug[self.bot.botid].money + amount
             save_bougs(self.bot)
             embed.add_field(name="\u200b", value=f"<:feelsBadMan:751132464394534942> Dommage <@{self.bot.dict_boug[id_target].id}> tu as perdu {amount} :coin:", inline=False)
             if risk > 1:
