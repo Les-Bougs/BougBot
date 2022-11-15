@@ -36,6 +36,7 @@ class GameCog(commands.Cog):
         amount = min(amount, 1000, self.bot.dict_boug[id_target].money)
         base = 6
         chance = risk/base
+        #view=View(timeout=30) # add timeout to roulboug button
         view=View()
 
         #Tableau des gains
@@ -51,7 +52,7 @@ class GameCog(commands.Cog):
             colour=discord.Colour.blue())
 
         random_value = random.random()
-        if random_value > chance:
+        if random_value > chance: # when player wins
             gain = int(amount*dict_gain[risk])
             self.bot.dict_boug[id_target].money = self.bot.dict_boug[id_target].money + amount + gain
             save_bougs(self.bot)
@@ -65,8 +66,9 @@ class GameCog(commands.Cog):
             else:
                 embed.add_field(name="\u200b", value=f"<:stonks:833364123990360075> Bravo champion, tu as gagné le jackpot !", inline=False)
                 await ctx.send(embed=embed)
-        else:
-            self.bot.dict_boug[self.bot.botid].money = self.bot.dict_boug[self.bot.botid].money + amount
+        else: # when player lose
+            botid_clean = int(self.bot.botid[2:-1])
+            self.bot.dict_boug[botid_clean].money = self.bot.dict_boug[botid_clean].money + amount # envoi la somme perdue à BougBot
             save_bougs(self.bot)
             embed.add_field(name="\u200b", value=f"<:feelsBadMan:751132464394534942> Dommage <@{self.bot.dict_boug[id_target].id}> tu as perdu {amount} :coin:", inline=False)
             if risk > 1:
