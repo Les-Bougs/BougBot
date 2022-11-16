@@ -11,6 +11,7 @@ from reaction_update import reaction_update
 
 load_dotenv(dotenv_path="config")
 
+
 class BougBot(discord.Bot):
     def __init__(self):
         self.dict_boug = {}
@@ -25,7 +26,9 @@ class BougBot(discord.Bot):
     async def on_ready(self):
         self.botid = f"<@{self.user.id}>"
         self.name = f"{self.user.display_name}"
-        self.list_members_guild = list(discord.utils.get(self.guilds, name="Les Bougs du fond").members)
+        self.list_members_guild = list(
+            discord.utils.get(self.guilds, name="Les Bougs du fond").members
+        )
         self.dict_msg = {}
         self.loaded_data = load_bougs()
 
@@ -33,18 +36,18 @@ class BougBot(discord.Bot):
             if self.loaded_data.get(str(guild_member.id)):
                 id_member = str(guild_member.id)
                 self.dict_boug[guild_member.id] = Boug(
-                    self.loaded_data[id_member]['id'],
-                    self.loaded_data[id_member]['name'],
-                    self.loaded_data[id_member]['money'],
-                    self.loaded_data[id_member]['last_connected']
+                    self.loaded_data[id_member]["id"],
+                    self.loaded_data[id_member]["name"],
+                    self.loaded_data[id_member]["money"],
+                    self.loaded_data[id_member]["last_connected"],
                 )
             else:
                 self.dict_boug[guild_member.id] = Boug(
                     guild_member.id,
                     guild_member.name,
-                    #random.randint(0,1000),
+                    # random.randint(0,1000),
                     0,
-                    datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+                    datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
                 )
         save_bougs(self)
         print(f"{self.name} est prêt.\nBot id: {self.botid}")
@@ -55,18 +58,25 @@ class BougBot(discord.Bot):
                 if self.botid in message.content:
                     user = message.author
                     await message.reply(f"{response} <@{user.id}>")
-        await reply(self, message, ("merci","cimer","thanks","thx"), "De rien")
-        await reply(self, message, ("salut","hello","wesh","bonjour"), "Salut")
-        await reply(self, message, ("ntm","fdp","merde","putain","tg"), "Attention à ton langage ;-)")
+
+        await reply(self, message, ("merci", "cimer", "thanks", "thx"), "De rien")
+        await reply(self, message, ("salut", "hello", "wesh", "bonjour"), "Salut")
+        await reply(
+            self,
+            message,
+            ("ntm", "fdp", "merde", "putain", "tg"),
+            "Attention à ton langage ;-)",
+        )
         print(message.content)
 
     async def on_voice_state_update(self, member, before, after):
         voice_update(self, member, before, after)
-    
+
     # ADD ON REACTION EVENT
     async def on_reaction_add(self, reaction, user):
         reaction_update(self, reaction, user)
-    
+
+
 ## ADD JOB EVERY X TIMES
 # import datetime
 # import discord
