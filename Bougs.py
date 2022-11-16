@@ -1,6 +1,7 @@
 import json
 
-class Boug():
+
+class Boug:
     def __init__(self, id, name, money, last_connected):
         self.id = id
         self.name = name
@@ -10,7 +11,7 @@ class Boug():
     def toJson(self):
         print(json.dumps(self, default=lambda o: o.__dict__))
         return json.dumps(self, default=lambda o: o.__dict__)
-    
+
     def get_id(self):
         return self.id
 

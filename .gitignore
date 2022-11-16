@@ -3,3 +3,5 @@ __pycache__/
 Commands/__pycache__/
 .DS_Store
 blockchain.json
+Commands/bougcast.mp3
+Sound/bougcast.mp3

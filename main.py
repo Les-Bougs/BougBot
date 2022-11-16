@@ -7,8 +7,10 @@ from dotenv import load_dotenv
 from Bougs import Boug
 from load_save_bougs import save_bougs, load_bougs
 from voice_update import voice_update
+from reaction_update import reaction_update
 
 load_dotenv(dotenv_path="config")
+
 
 class BougBot(discord.Bot):
     def __init__(self):
@@ -24,25 +26,28 @@ class BougBot(discord.Bot):
     async def on_ready(self):
         self.botid = f"<@{self.user.id}>"
         self.name = f"{self.user.display_name}"
-        self.list_members_guild = list(discord.utils.get(self.guilds, name="Les Bougs du fond").members)
+        self.list_members_guild = list(
+            discord.utils.get(self.guilds, name="Les Bougs du fond").members
+        )
+        self.dict_msg = {}
         self.loaded_data = load_bougs()
 
         for guild_member in self.list_members_guild:
             if self.loaded_data.get(str(guild_member.id)):
                 id_member = str(guild_member.id)
                 self.dict_boug[guild_member.id] = Boug(
-                    self.loaded_data[id_member]['id'],
-                    self.loaded_data[id_member]['name'],
-                    self.loaded_data[id_member]['money'],
-                    self.loaded_data[id_member]['last_connected']
+                    self.loaded_data[id_member]["id"],
+                    self.loaded_data[id_member]["name"],
+                    self.loaded_data[id_member]["money"],
+                    self.loaded_data[id_member]["last_connected"],
                 )
             else:
                 self.dict_boug[guild_member.id] = Boug(
                     guild_member.id,
                     guild_member.name,
-                    #random.randint(0,1000),
+                    # random.randint(0,1000),
                     0,
-                    datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+                    datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
                 )
         save_bougs(self)
         print(f"{self.name} est prêt.\nBot id: {self.botid}")
@@ -53,27 +58,25 @@ class BougBot(discord.Bot):
                 if self.botid in message.content:
                     user = message.author
                     await message.reply(f"{response} <@{user.id}>")
-        await reply(self, message, ("merci","cimer","thanks","thx"), "De rien")
-        await reply(self, message, ("salut","hello","wesh","bonjour"), "Salut")
-        await reply(self, message, ("ntm","fdp","merde","putain","tg"), "Attention à ton langage ;-)")
+
+        await reply(self, message, ("merci", "cimer", "thanks", "thx"), "De rien")
+        await reply(self, message, ("salut", "hello", "wesh", "bonjour"), "Salut")
+        await reply(
+            self,
+            message,
+            ("ntm", "fdp", "merde", "putain", "tg"),
+            "Attention à ton langage ;-)",
+        )
         print(message.content)
 
     async def on_voice_state_update(self, member, before, after):
         voice_update(self, member, before, after)
-    
+
     # ADD ON REACTION EVENT
     async def on_reaction_add(self, reaction, user):
-        message = reaction.message
-        if isinstance(reaction.emoji, str):
-            emoji_name = reaction.emoji
-        else:
-            emoji_name = reaction.emoji.name
-        print(f"{user} reacted with {emoji_name} on '{message.content}' written by {message.author}")
-        if message.author == user:
-            print(f'{user} a réagi à son propre message (aka auto-suceur move)')
-        else:
-            print(f'{user} donne de la force à son fréro {message.author}')
-    
+        reaction_update(self, reaction, user)
+
+
 ## ADD JOB EVERY X TIMES
 # import datetime
 # import discord
@@ -104,5 +107,6 @@ bot.load_extension("Commands.coin")
 bot.load_extension("Commands.money")
 bot.load_extension("Commands.voclist")
 bot.load_extension("Commands.game")
+bot.load_extension("Commands.play")
 
 bot.run(os.getenv("TOKEN"))
