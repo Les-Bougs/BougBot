@@ -111,7 +111,7 @@ class CoinCog(commands.Cog):
             value=f":bank: <@{target_boug.id}>: {target_boug.money} :coin:",
             inline=False,
         )
-        print(f"{target_boug} reçoit {amount} BGC")
+        print(f"{target_boug.name} reçoit {amount} BGC")
         await ctx.respond(embed=embed, ephemeral=not(display))
 
 
