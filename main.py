@@ -12,7 +12,7 @@ from reaction_update import reaction_update
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
 from apscheduler.triggers.cron import CronTrigger
 
-load_dotenv(dotenv_path="config_test")
+load_dotenv(dotenv_path="config")
 
 
 class BougBot(discord.Bot):
