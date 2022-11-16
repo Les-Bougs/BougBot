@@ -1,4 +1,5 @@
 config
+config_test
 __pycache__/
 Commands/__pycache__/
 .DS_Store
