@@ -12,7 +12,8 @@ class CoinCog(commands.Cog):
 
     @commands.slash_command(name="coin", guild_ids=guild_id)
     @option("user", description="Membre du serveur, commence par @")
-    async def coin(self, ctx, user=None):
+    @option("display", description="Rendre le resultat visible pour tout le monde", choices=["False", "True"])
+    async def coin(self, ctx, user=None, display: bool=False):
         """Donne le solde de BougCoin d'un membre du serveur"""
 
         # Target
@@ -33,7 +34,7 @@ class CoinCog(commands.Cog):
             value=f":bank: <@{target_boug.id}>: {target_boug.money} :coin:",
             inline=False,
         )
-        await ctx.respond(embed=embed)
+        await ctx.respond(embed=embed, ephemeral=not(display))
 
     @commands.slash_command(name="give", guild_ids=guild_id)
     @option("user", description="Membre du serveur, commence par @")
@@ -82,7 +83,8 @@ class CoinCog(commands.Cog):
     )  # Seul les admin peuvent faire la command TODO à test
     @option("user", description="Membre du serveur, commence par @")
     @option("amount", description="Montant de BougCoin à crediter")
-    async def adgive(self, ctx, target: str, amount: int):
+    @option("display", description="Rendre le resultat visible pour tout le monde", choices=["False", "True"])
+    async def adgive(self, ctx, target: str, amount: int, display: bool=False):
         """! réservé aux Admins ! Ajouter de l'argent à un membre du serveur"""
 
         # Target
@@ -109,7 +111,7 @@ class CoinCog(commands.Cog):
             value=f":bank: <@{target_boug.id}>: {target_boug.money} :coin:",
             inline=False,
         )
-        await ctx.respond(embed=embed)
+        await ctx.respond(embed=embed, ephemeral=not(display))
 
 
 def setup(bot):
