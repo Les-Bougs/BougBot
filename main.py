@@ -97,5 +97,6 @@ bot.load_extension("Commands.coin")
 bot.load_extension("Commands.money")
 bot.load_extension("Commands.voclist")
 bot.load_extension("Commands.game")
+bot.load_extension("Commands.play")
 
 bot.run(os.getenv("TOKEN"))
