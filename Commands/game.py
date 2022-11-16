@@ -5,6 +5,7 @@ from discord.ui import Button, View
 from load_save_bougs import save_bougs, load_bougs
 
 import random
+import requests
 
 guild_id = [751114414132035694]
 
@@ -99,6 +100,34 @@ class GameCog(commands.Cog):
             else:
                 await ctx.respond(embed=embed)
 
+    @commands.slash_command(name="quiz", guild_ids=guild_id)
+    @option("target", description="Personne que tu veux défier")
+    async def quiz(self, ctx):
+        """Permet de défier quelqu'un avec un super quiz"""
+        url = 'https://opentdb.com/api.php?amount=1'
+        response = requests.get(url)
+        list_questions = response.json()['results']
+        for question in list_questions:
+            category = question['category']
+            question_text = question['question'].replace("&quot;", "'")
+            correct_answer = question['correct_answer']
+            print(f"Category : {category}")
+            print(f"Question : {question_text}")
+            print(f"Answer : {correct_answer}")
+            print("\n")
+
+            embed = discord.Embed(
+            title=f"Quiz time",
+            description=f"Vive les quiz",
+            colour=discord.Colour.blue(),
+            )
+
+            embed.add_field(
+                name=f"Question : {question_text}",
+                value=f"Answer : {correct_answer}",
+                inline=False,
+            )
+            await ctx.respond(embed=embed, ephemeral=True)
 
 def setup(bot):
     bot.add_cog(GameCog(bot))

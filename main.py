@@ -9,7 +9,10 @@ from load_save_bougs import save_bougs, load_bougs
 from voice_update import voice_update
 from reaction_update import reaction_update
 
-load_dotenv(dotenv_path="config")
+from apscheduler.schedulers.asyncio import AsyncIOScheduler
+from apscheduler.triggers.cron import CronTrigger
+
+load_dotenv(dotenv_path="config_test")
 
 
 class BougBot(discord.Bot):
@@ -52,6 +55,12 @@ class BougBot(discord.Bot):
         save_bougs(self)
         print(f"{self.name} est prêt.\nBot id: {self.botid}")
 
+        #initializing scheduler
+        scheduler = AsyncIOScheduler()
+        scheduler.add_job(func, CronTrigger(second="0, 10, 20, 30, 40, 50")) 
+        #starting the scheduler
+        scheduler.start()
+
     async def on_message(self, message):
         async def reply(self, message, list_words, response):
             if any(x in message.content.lower() for x in list_words):
@@ -77,10 +86,27 @@ class BougBot(discord.Bot):
         reaction_update(self, reaction, user)
 
 
+async def func():
+    print(datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S"))
+
 ## ADD JOB EVERY X TIMES
-# import datetime
-# import discord
-# from discord.ext import tasks
+from discord.ext import tasks
+
+# time_event = datetime.time(second=1)
+# print(time_event)
+# @tasks.loop(time=time_event) # repeat after every 10 seconds
+# async def myLoop():
+#     print(datetime.datetime.now())
+
+# myLoop.start()
+
+
+
+# @BougBot.event
+# async def on_ready():
+#     if not myLoop.is_running():
+#         myLoop.start() #If the task is not already running, start it.
+#         print("MyLoop started")
 
 # client = discord.Client()
 
