@@ -34,10 +34,20 @@ def reaction_update(bot, reaction, user):
             print(f"{user} already tipped this msg")
         else:
             boug_msg.tipers.append(user)
-            print(
-                f"IT'S TIP TIME !! {message.author} gagne +1BGC grâce au tip de {user}"
-            )
-            give_money(bot, source=user, target=message.author, amount=1)
+            #add a timestamp to the dict_tip_ts of the boug
+            if(bot.dict_boug[int(message.author.id)].dict_tip_ts.get(user.id) is None):
+                bot.dict_boug[int(message.author.id)].dict_tip_ts[user.id] = message.created_at
+            else:
+                max_period = 10
+                if((message.created_at - bot.dict_boug[int(message.author.id)].dict_tip_ts[user.id]).seconds < max_period):
+                    print(f"{user} already tipped this boug in the last {max_period} seconds")
+                    return
+                else:
+                    bot.dict_boug[int(message.author.id)].dict_tip_ts[user.id] = message.created_at
+                    print(
+                        f"IT'S TIP TIME !! {message.author} gagne +1BGC grâce au tip de {user}"
+                    )
+                    give_money(bot, source=user, target=message.author, amount=1)
     else:
         print(f"{user} paye {message.author} en visibilité")
 

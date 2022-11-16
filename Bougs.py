@@ -7,6 +7,7 @@ class Boug:
         self.name = name
         self.money = money
         self.last_connected = last_connected
+        self.dict_tip_ts = {}
 
     def toJson(self):
         print(json.dumps(self, default=lambda o: o.__dict__))
