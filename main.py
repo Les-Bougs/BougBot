@@ -57,7 +57,7 @@ class BougBot(discord.Bot):
 
         #initializing scheduler
         scheduler = AsyncIOScheduler()
-        scheduler.add_job(func, CronTrigger(second="0, 10, 20, 30, 40, 50")) 
+        scheduler.add_job(func, CronTrigger(second="0")) 
         #starting the scheduler
         scheduler.start()
 
